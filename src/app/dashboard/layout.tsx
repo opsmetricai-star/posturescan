@@ -19,11 +19,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     <div className="min-h-screen bg-slate-50">
       <header className="border-b bg-white">
         <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-5">
-          <Link href="/"><Logo /></Link>
-          <nav className="flex items-center gap-6 text-sm font-medium text-slate-700">
-            <Link href="/dashboard" className="hover:text-brand">Scans</Link>
+          <Link href="/" aria-label="PostureScan home"><Logo /></Link>
+          <nav className="flex items-center gap-4 text-sm font-medium text-slate-700 sm:gap-6">
+            <Link href="/dashboard" className="hover:text-brand">Analyses</Link>
             <Link href="/dashboard/billing" className="hover:text-brand">Billing</Link>
-            <form action={logout}><button className="text-brand">Sign out</button></form>
+            <Link href="/dashboard/settings" className="hover:text-brand">Settings</Link>
+            <form action={logout}><button className="rounded-full border border-slate-300 px-4 py-1.5 font-semibold hover:border-brand hover:text-brand">Sign out</button></form>
           </nav>
         </div>
       </header>

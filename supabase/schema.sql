@@ -27,15 +27,8 @@ create policy "own subscription select" on public.subscriptions for select using
 
 create index if not exists scans_user_created on public.scans (user_id, created_at desc);
 
--- Contact / demo requests. Anyone may submit; nobody can read via the public API.
-create table if not exists public.leads (
-  id uuid primary key default gen_random_uuid(),
-  first_name text not null,
-  last_name text not null,
-  email text not null,
-  company text not null,
-  message text not null default '',
-  created_at timestamptz not null default now()
-);
-alter table public.leads enable row level security;
-create policy "anyone can submit lead" on public.leads for insert to anon, authenticated with check (true);
+-- Table privileges (required in addition to RLS policies).
+grant usage on schema public to anon, authenticated, service_role;
+grant select, insert, delete on public.scans to authenticated;
+grant select on public.subscriptions to authenticated;
+grant all on public.scans, public.subscriptions to service_role;

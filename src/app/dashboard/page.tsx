@@ -15,21 +15,21 @@ export default async function Dashboard() {
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
-      <section className="rounded-2xl bg-white p-7 shadow-sm">
-        <h1 className="mb-5 text-2xl font-semibold">New posture scan</h1>
+      <section className="rounded-2xl bg-white p-6 shadow-sm sm:p-7">
+        <h1 className="mb-5 text-2xl font-semibold">New analysis</h1>
         <ScanForm />
       </section>
       <aside className="space-y-6">
         <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <p className="text-sm text-slate-500">{plan?.name ?? "Free"} plan usage</p>
-          <p className="mt-1 text-3xl font-semibold text-brand">{used}<span className="text-base text-slate-400"> / {limit}</span></p>
+          <p className="text-sm text-slate-500">{plan?.name ?? "Free"} plan usage this month</p>
+          <p className="mt-1 text-3xl font-semibold text-brand">{used}<span className="text-base text-slate-400"> of {limit}</span></p>
           <div className="mt-3 h-2 rounded-full bg-brand-light"><div className="h-2 rounded-full bg-brand" style={{ width: `${Math.min(100, (used / limit) * 100)}%` }} /></div>
         </div>
         <div className="rounded-2xl bg-white p-6 shadow-sm">
-          <h2 className="font-semibold">Recent scans</h2>
+          <h2 className="font-semibold">Recent analyses</h2>
           <ul className="mt-3 space-y-2 text-sm">
-            {(scans ?? []).length === 0 && <li className="text-slate-500">No scans yet.</li>}
-            {(scans ?? []).map((s) => <li key={s.id} className="flex justify-between"><span className="truncate pr-2">{s.title}</span><b className="text-brand">{s.score}</b></li>)}
+            {(scans ?? []).length === 0 && <li className="text-slate-500">Your analyses will appear here after you run the first one.</li>}
+            {(scans ?? []).map((s) => <li key={s.id} className="flex justify-between gap-2"><span className="truncate">{s.title}</span><b className="text-brand">{s.score}</b></li>)}
           </ul>
         </div>
       </aside>

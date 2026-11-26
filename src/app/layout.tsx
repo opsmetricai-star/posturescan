@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PostureScan | Cloud and AI Security Posture",
-  description: "One security graph for your code, cloud and runtime.",
+  title: "PostureScan | AI-native cloud security posture for business",
+  description: "An AI engine that analyzes infrastructure configurations, ranks risk and generates the fix.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

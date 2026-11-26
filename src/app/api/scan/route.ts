@@ -50,19 +50,26 @@ export async function POST(req: Request) {
   const limit = plan?.scans ?? FREE_SCANS;
   const monthStart = new Date(); monthStart.setUTCDate(1); monthStart.setUTCHours(0, 0, 0, 0);
   const { count } = await supabase.from("scans").select("id", { count: "exact", head: true }).eq("user_id", auth.user.id).gte("created_at", monthStart.toISOString());
-  if ((count ?? 0) >= limit) return NextResponse.json({ error: `Monthly scan limit (${limit}) reached. Upgrade on the billing page.` }, { status: 402 });
+  if ((count ?? 0) >= limit) return NextResponse.json({ error: `You have used all ${limit} analyses included this month. Choose a plan on the billing page to continue.` }, { status: 402 });
 
   const key = process.env.GEMINI_API_KEY;
-  if (!key) return NextResponse.json({ error: "AI provider is not configured." }, { status: 503 });
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+  if (!key) return NextResponse.json({ error: "Analysis is temporarily unavailable. Try again shortly." }, { status: 503 });
+  const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
   const prompt = `You are a cloud security engineer. Review the following cloud configuration (IAM policy, Terraform, Kubernetes manifest, storage config, etc.) and report real misconfigurations only. Score 0-100 where 100 is fully hardened. Do not invent resources that are not in the input.\n\n<config>\n${parsed.data.config}\n</config>`;
-  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+  const call = () => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": key },
     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.2 } }),
+    signal: AbortSignal.timeout(45000),
   });
-  if (!res.ok) return NextResponse.json({ error: `AI provider error (${res.status}).` }, { status: 502 });
+  let res: Response | null = null;
+  for (let i = 0; i < 3; i++) {
+    try { res = await call(); } catch { res = null; }
+    if (res?.ok || (res && res.status !== 503 && res.status !== 429)) break;
+    await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+  }
+  if (!res || !res.ok) return NextResponse.json({ error: "Analysis is temporarily unavailable. Try again shortly." }, { status: 502 });
 
   const json = await res.json();
   const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -70,6 +77,6 @@ export async function POST(req: Request) {
   if (!out.success) return NextResponse.json({ error: "AI returned an invalid result. Try again." }, { status: 502 });
 
   const { data: row, error } = await supabase.from("scans").insert({ user_id: auth.user.id, title: parsed.data.title, input: parsed.data.config, result: out.data, score: Math.round(out.data.score) }).select("id").single();
-  if (error) return NextResponse.json({ error: "Could not save the scan." }, { status: 500 });
+  if (error) return NextResponse.json({ error: "The analysis could not be saved. Try again." }, { status: 500 });
   return NextResponse.json({ id: row.id, ...out.data });
 }
