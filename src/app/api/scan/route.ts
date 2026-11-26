@@ -57,17 +57,18 @@ export async function POST(req: Request) {
   const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
   const prompt = `You are a cloud security engineer. Review the following cloud configuration (IAM policy, Terraform, Kubernetes manifest, storage config, etc.) and report real misconfigurations only. Score 0-100 where 100 is fully hardened. Do not invent resources that are not in the input.\n\n<config>\n${parsed.data.config}\n</config>`;
-  const call = () => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
+  // Try the primary model first, then fall back to others if it is overloaded or unavailable.
+  const models = [model, "gemini-3-flash-preview", "gemini-3.1-flash-lite"].filter((m, i, a) => a.indexOf(m) === i);
+  const call = (m: string) => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "x-goog-api-key": key },
     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json", responseSchema: schema, temperature: 0.2 } }),
-    signal: AbortSignal.timeout(45000),
+    signal: AbortSignal.timeout(25000),
   });
   let res: Response | null = null;
-  for (let i = 0; i < 3; i++) {
-    try { res = await call(); } catch { res = null; }
-    if (res?.ok || (res && res.status !== 503 && res.status !== 429)) break;
-    await new Promise((r) => setTimeout(r, 1500 * (i + 1)));
+  for (const m of models) {
+    try { res = await call(m); } catch { res = null; }
+    if (res?.ok) break;
   }
   if (!res || !res.ok) return NextResponse.json({ error: "Analysis is temporarily unavailable. Try again shortly." }, { status: 502 });
 
