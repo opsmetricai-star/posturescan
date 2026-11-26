@@ -1,4 +1,4 @@
--- Run in the Supabase SQL editor.
+-- Safe to run more than once. Run in the Supabase SQL editor.
 create table if not exists public.scans (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -19,10 +19,15 @@ create table if not exists public.subscriptions (
 alter table public.scans enable row level security;
 alter table public.subscriptions enable row level security;
 
+drop policy if exists "own scans select" on public.scans;
+drop policy if exists "own scans insert" on public.scans;
+drop policy if exists "own scans delete" on public.scans;
+drop policy if exists "own subscription select" on public.subscriptions;
+
 create policy "own scans select" on public.scans for select using (auth.uid() = user_id);
 create policy "own scans insert" on public.scans for insert with check (auth.uid() = user_id);
 create policy "own scans delete" on public.scans for delete using (auth.uid() = user_id);
--- Users can only READ their subscription. Activate plans from the dashboard/service role after verifying payment.
+-- Users can only read their subscription. Activate plans from the Supabase dashboard or service role after verifying payment.
 create policy "own subscription select" on public.subscriptions for select using (auth.uid() = user_id);
 
 create index if not exists scans_user_created on public.scans (user_id, created_at desc);
