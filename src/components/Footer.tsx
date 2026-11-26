@@ -1,22 +1,31 @@
 import Link from "next/link";
 import Logo from "./Logo";
+import { bySection } from "@/lib/content";
 
 const cols = [
-  { title: "PLATFORM", links: ["Cloud & AI Security", "PostureScan Code", "PostureScan Cloud", "PostureScan Defend", "Integrations", "Environments", "Documentation"] },
-  { title: "LEARN", links: ["Customer Stories", "Security Courses", "Blog", "Academy", "Resource Center", "Threat Landscape", "Security Assessment", "Vulnerability Database"] },
-  { title: "COMPANY", links: ["About", "Careers", "Newsroom", "Events", "Contact Us", "Trust Center", "Partner Alliance"] },
+  { title: "PLATFORM", section: "platform" as const },
+  { title: "SOLUTIONS", section: "solutions" as const },
+  { title: "LEARN", section: "resources" as const },
+  { title: "COMPANY", section: "company" as const },
 ];
 
 export default function Footer() {
   return (
-    <footer id="company" className="bg-[#14102b] text-slate-300">
-      <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 md:grid-cols-4">
-        <div><Logo light /><p className="mt-4 max-w-xs text-sm text-slate-400">One security graph for your code, cloud and runtime.</p></div>
+    <footer className="bg-[#14102b] text-slate-300">
+      <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 sm:grid-cols-2 lg:grid-cols-5">
+        <div>
+          <Logo light />
+          <p className="mt-4 max-w-xs text-sm text-slate-400">One security graph for your code, cloud and runtime.</p>
+        </div>
         {cols.map((c) => (
           <div key={c.title}>
             <h4 className="mb-4 text-xs font-semibold tracking-widest text-white">{c.title}</h4>
             <ul className="space-y-2.5 text-sm">
-              {c.links.map((l) => <li key={l}><Link href="#" className="hover:text-white">{l}</Link></li>)}
+              {bySection(c.section).map((p) => (
+                <li key={p.slug}><Link href={`/${p.section}/${p.slug}`} className="hover:text-white">{p.nav}</Link></li>
+              ))}
+              {c.section === "company" && <li><Link href="/contact" className="hover:text-white">Contact Us</Link></li>}
+              {c.section === "platform" && <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>}
             </ul>
           </div>
         ))}
@@ -24,7 +33,10 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-[1240px] flex-wrap items-center justify-between gap-3 px-5 py-6 text-xs text-slate-400">
           <span>© 2026 PostureScan, Inc.</span>
-          <div className="flex gap-5"><Link href="#">Status</Link><Link href="#">Privacy Policy</Link><Link href="#">Terms of Use</Link><Link href="#">Cookie Settings</Link></div>
+          <div className="flex gap-5">
+            <Link href="/legal/privacy">Privacy Policy</Link>
+            <Link href="/legal/terms">Terms of Use</Link>
+          </div>
         </div>
       </div>
     </footer>
